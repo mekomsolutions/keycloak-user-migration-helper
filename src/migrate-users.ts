@@ -5,7 +5,7 @@ import fs from "fs/promises";
 import path from "path";
 import { getDbConfig, validateDbConfig } from "./config/database";
 import logger from "./utils/logger";
-import { KeycloakImport } from "./types/keycloak";
+import { KeycloakImport, KeycloakUser } from "./types/keycloak";
 import { GET_USERS_QUERY as OPENMRS_GET_USERS_QUERY } from "./sources/openmrs/queries";
 import { transformToKeycloakUser as transformOpenMRSUser } from "./sources/openmrs/transformer";
 import { OpenMRSUser } from "./sources/openmrs/types";
@@ -42,40 +42,37 @@ async function ensureDirectoryExists(filePath: string): Promise<void> {
   }
 }
 
-export function getOutputPath(sourceSystem: string): string {
+export function getOutputPath(sourceSystem?: string): string {
   const outputDir = process.env.OUTPUT_DIR!;
-  const filename = `${sourceSystem}-users-${new Date().toISOString().split("T")[0]}.json`;
+  const filename = sourceSystem 
+    ? `${sourceSystem}-users-${new Date().toISOString().split('T')[0]}.json`
+    : 'keycloak-users-import.json';
   return path.join(outputDir, filename);
 }
 
-async function migrateOpenMRSUsers(): Promise<number> {
+async function writeUsersToFile(users: KeycloakUser[], sourceSystem: string): Promise<void> {
+  const outputPath = getOutputPath(sourceSystem);
+  await ensureDirectoryExists(outputPath);
+  const keycloakUsers: KeycloakImport = { users };
+  await fs.writeFile(outputPath, JSON.stringify(keycloakUsers, null, 2), "utf8");
+  logger.info(`Successfully wrote ${users.length} ${sourceSystem} users to ${outputPath}`);
+}
+
+async function migrateOpenMRSUsers(): Promise<KeycloakUser[]> {
   let connection;
   try {
     connection = await mysql.createPool(getDbConfig());
     logger.info("OpenMRS database connection established");
 
-    const [rows] = await connection.execute<mysql.RowDataPacket[]>(
-      OPENMRS_GET_USERS_QUERY
-    );
+    const [rows] = await connection.execute<mysql.RowDataPacket[]>(OPENMRS_GET_USERS_QUERY);
     const users = rows as unknown as OpenMRSUser[];
     logger.info(`Retrieved ${users.length} users from OpenMRS`);
 
-    const keycloakUsers: KeycloakImport = {
-      users: users.map(transformOpenMRSUser),
-    };
+    const keycloakUsers = users.map(transformOpenMRSUser);
+    logger.info(`Transformed ${users.length} OpenMRS users to Keycloak format`);
 
-    const outputPath = getOutputPath("openmrs");
-    await ensureDirectoryExists(outputPath);
-    await fs.writeFile(
-      outputPath,
-      JSON.stringify(keycloakUsers, null, 2),
-      "utf8"
-    );
-    logger.info(
-      `Successfully migrated ${users.length} OpenMRS users to ${outputPath}`
-    );
-
-    return users.length;
+    await writeUsersToFile(keycloakUsers, 'openmrs');
+    return keycloakUsers;
   } finally {
     if (connection) {
       await connection.end();
@@ -84,7 +81,7 @@ async function migrateOpenMRSUsers(): Promise<number> {
   }
 }
 
-async function migrateOdooUsers(): Promise<number> {
+async function migrateOdooUsers(): Promise<KeycloakUser[]> {
   let pool;
   try {
     pool = new Pool({
@@ -99,22 +96,11 @@ async function migrateOdooUsers(): Promise<number> {
     const { rows } = await pool.query<OdooUser>(ODOO_GET_USERS_QUERY);
     logger.info(`Retrieved ${rows.length} users from Odoo`);
 
-    const keycloakUsers: KeycloakImport = {
-      users: rows.map(transformOdooUser),
-    };
+    const keycloakUsers = rows.map(transformOdooUser);
+    logger.info(`Transformed ${rows.length} Odoo users to Keycloak format`);
 
-    const outputPath = getOutputPath("odoo");
-    await ensureDirectoryExists(outputPath);
-    await fs.writeFile(
-      outputPath,
-      JSON.stringify(keycloakUsers, null, 2),
-      "utf8"
-    );
-    logger.info(
-      `Successfully migrated ${rows.length} Odoo users to ${outputPath}`
-    );
-
-    return rows.length;
+    await writeUsersToFile(keycloakUsers, 'odoo');
+    return keycloakUsers;
   } finally {
     if (pool) {
       await pool.end();
@@ -128,24 +114,33 @@ async function migrateUsers(): Promise<void> {
     await validateEnvironment();
     const sourceSystem = process.env.SOURCE_SYSTEM?.toLowerCase();
 
-    let migratedCount = 0;
+    let allUsers: KeycloakUser[] = [];
     switch (sourceSystem) {
-      case "openmrs":
-        migratedCount = await migrateOpenMRSUsers();
+      case 'openmrs':
+        allUsers = await migrateOpenMRSUsers();
         break;
-      case "odoo":
-        migratedCount = await migrateOdooUsers();
+      case 'odoo':
+        allUsers = await migrateOdooUsers();
         break;
-      case "all":
-        const openmrsCount = await migrateOpenMRSUsers();
-        const odooCount = await migrateOdooUsers();
-        migratedCount = openmrsCount + odooCount;
+      case 'all':
+        const openmrsUsers = await migrateOpenMRSUsers();
+        const odooUsers = await migrateOdooUsers();
+        allUsers = [...openmrsUsers, ...odooUsers];
         break;
       default:
         throw new Error(`Unsupported source system: ${sourceSystem}`);
     }
 
-    logger.info(`Total users migrated: ${migratedCount}`);
+    // Write merged file only if we have users from multiple sources
+    if (sourceSystem === 'all') {
+      const mergedOutput: KeycloakImport = {
+        users: allUsers,
+      };
+      const outputPath = getOutputPath();
+      await ensureDirectoryExists(outputPath);
+      await fs.writeFile(outputPath, JSON.stringify(mergedOutput, null, 2), "utf8");
+      logger.info(`Successfully merged ${allUsers.length} users to ${outputPath}`);
+    }
   } catch (error) {
     logger.error("Error during migration:", error);
     throw error;
