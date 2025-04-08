@@ -11,4 +11,5 @@ keycloak-users.json
 .env
 
 logs/
+output/
 

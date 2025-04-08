@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import mysql from "mysql2/promise";
 import fs from "fs/promises";
+import path from "path";
 import { dbConfig, validateDbConfig } from "./config/database";
 import logger from "./utils/logger";
 import { KeycloakImport } from "./types/keycloak";
@@ -29,6 +30,15 @@ async function validateEnvironment(): Promise<void> {
   }
 }
 
+async function ensureDirectoryExists(filePath: string): Promise<void> {
+  const dir = path.dirname(filePath);
+  try {
+    await fs.access(dir);
+  } catch {
+    await fs.mkdir(dir, { recursive: true });
+  }
+}
+
 async function migrateUsers(): Promise<void> {
   let connection;
 
@@ -47,15 +57,16 @@ async function migrateUsers(): Promise<void> {
       users: users.map(transformToKeycloakUser)
     };
 
+    const outputFile = process.env.OUTPUT_FILE!;
+    await ensureDirectoryExists(outputFile);
+    
     await fs.writeFile(
-      process.env.OUTPUT_FILE!,
+      outputFile,
       JSON.stringify(keycloakUsers, null, 2),
       "utf8"
     );
 
-    logger.info(
-      `Successfully migrated ${users.length} users to ${process.env.OUTPUT_FILE}`
-    );
+    logger.info(`Successfully migrated ${users.length} users to ${outputFile}`);
   } catch (error) {
     logger.error("Error during migration:", error);
     throw error;
