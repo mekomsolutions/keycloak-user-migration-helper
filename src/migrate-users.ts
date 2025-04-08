@@ -18,7 +18,7 @@ async function validateEnvironment(): Promise<void> {
     "KEYCLOAK_REALM_ROLES",
     "KEYCLOAK_DEFAULT_PASSWORD",
     "KEYCLOAK_CLIENT_ID",
-    "OUTPUT_FILE",
+    "KEYCLOAK_USERS_OUTPUT_FILE",
     "SOURCE_SYSTEM"
   ];
 
@@ -57,7 +57,7 @@ async function migrateUsers(): Promise<void> {
       users: users.map(transformToKeycloakUser)
     };
 
-    const outputFile = process.env.OUTPUT_FILE!;
+    const outputFile = process.env.KEYCLOAK_USERS_OUTPUT_FILE!;
     await ensureDirectoryExists(outputFile);
     
     await fs.writeFile(
