@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import mysql from "mysql2/promise";
 import fs from "fs/promises";
 import path from "path";
-import { dbConfig, validateDbConfig } from "./config/database";
+import { getDbConfig, validateDbConfig } from "./config/database";
 import logger from "./utils/logger";
 import { KeycloakImport } from "./types/keycloak";
 import { GET_USERS_QUERY } from "./sources/openmrs/queries";
@@ -52,7 +52,7 @@ async function migrateUsers(): Promise<void> {
     await validateEnvironment();
     logger.info(`Starting user migration from ${process.env.SOURCE_SYSTEM}`);
 
-    connection = await mysql.createPool(dbConfig);
+    connection = await mysql.createPool(getDbConfig());
     logger.info("Database connection established");
 
     const [rows] =
