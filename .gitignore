@@ -13,3 +13,18 @@ keycloak-users.json
 logs/
 output/
 
+# Test coverage
+coverage/
+.nyc_output/
+
+# IDE
+.vscode/
+.idea/
+
+# Build output
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db

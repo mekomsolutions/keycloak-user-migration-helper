@@ -39,7 +39,7 @@ async function ensureDirectoryExists(filePath: string): Promise<void> {
   }
 }
 
-function getOutputPath(): string {
+export function getOutputPath(): string {
   const outputDir = process.env.OUTPUT_DIR!;
   const filename = process.env.OUTPUT_FILENAME!;
   return path.join(outputDir, filename);

@@ -6,7 +6,7 @@ export function transformToKeycloakUser(user: OpenMRSUser): KeycloakUser {
     username: user.username,
     firstName: user.given_name || '',
     lastName: user.family_name || '',
-    email: user.email || '',
+    email: user.email || `${user.username}@example.com`,
     enabled: true,
     emailVerified: false,
     createdTimestamp: Date.now(),
@@ -25,7 +25,9 @@ export function transformToKeycloakUser(user: OpenMRSUser): KeycloakUser {
     disableableCredentialTypes: [],
     requiredActions: ['UPDATE_PASSWORD'],
     realmRoles: process.env.KEYCLOAK_REALM_ROLES!.split(','),
-    clientRoles: {},
+    clientRoles: {
+      [process.env.KEYCLOAK_CLIENT_ID!]: []
+    },
     notBefore: 0,
     groups: []
   };
