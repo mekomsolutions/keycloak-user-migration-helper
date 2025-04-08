@@ -1,0 +1,25 @@
+services:
+  user-migration:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: keycloak-user-migration
+    volumes:
+      - ${HOST_LOGS_DIR:-./logs}:/app/logs
+      - ${HOST_OUTPUT_DIR:-./output}:/app/output
+    environment:
+      - NODE_ENV=production
+      # Database configuration
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      # Keycloak configuration
+      - KEYCLOAK_REALM_ROLES=${KEYCLOAK_REALM_ROLES}
+      - KEYCLOAK_DEFAULT_PASSWORD=${KEYCLOAK_DEFAULT_PASSWORD}
+      # Output configuration
+      - OUTPUT_DIR=${OUTPUT_DIR}
+      - OUTPUT_FILENAME=${OUTPUT_FILENAME}
+      - SOURCE_SYSTEM=${SOURCE_SYSTEM}
+    restart: "no"
