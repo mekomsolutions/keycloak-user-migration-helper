@@ -17,9 +17,9 @@ async function validateEnvironment(): Promise<void> {
   const requiredEnvVars = [
     "KEYCLOAK_REALM_ROLES",
     "KEYCLOAK_DEFAULT_PASSWORD",
-    "KEYCLOAK_CLIENT_ID",
-    "KEYCLOAK_USERS_OUTPUT_FILE",
-    "SOURCE_SYSTEM"
+    "OUTPUT_DIR",
+    "OUTPUT_FILENAME",
+    "SOURCE_SYSTEM",
   ];
 
   const missing = requiredEnvVars.filter((var_) => !process.env[var_]);
@@ -39,6 +39,12 @@ async function ensureDirectoryExists(filePath: string): Promise<void> {
   }
 }
 
+function getOutputPath(): string {
+  const outputDir = process.env.OUTPUT_DIR!;
+  const filename = process.env.OUTPUT_FILENAME!;
+  return path.join(outputDir, filename);
+}
+
 async function migrateUsers(): Promise<void> {
   let connection;
 
@@ -49,24 +55,27 @@ async function migrateUsers(): Promise<void> {
     connection = await mysql.createPool(dbConfig);
     logger.info("Database connection established");
 
-    const [rows] = await connection.execute<mysql.RowDataPacket[]>(GET_USERS_QUERY);
+    const [rows] =
+      await connection.execute<mysql.RowDataPacket[]>(GET_USERS_QUERY);
     const users = rows as unknown as OpenMRSUser[];
-    logger.info(`Retrieved ${users.length} users from ${process.env.SOURCE_SYSTEM}`);
+    logger.info(
+      `Retrieved ${users.length} users from ${process.env.SOURCE_SYSTEM}`
+    );
 
     const keycloakUsers: KeycloakImport = {
-      users: users.map(transformToKeycloakUser)
+      users: users.map(transformToKeycloakUser),
     };
 
-    const outputFile = process.env.KEYCLOAK_USERS_OUTPUT_FILE!;
-    await ensureDirectoryExists(outputFile);
-    
+    const outputPath = getOutputPath();
+    await ensureDirectoryExists(outputPath);
+
     await fs.writeFile(
-      outputFile,
+      outputPath,
       JSON.stringify(keycloakUsers, null, 2),
       "utf8"
     );
 
-    logger.info(`Successfully migrated ${users.length} users to ${outputFile}`);
+    logger.info(`Successfully migrated ${users.length} users to ${outputPath}`);
   } catch (error) {
     logger.error("Error during migration:", error);
     throw error;
