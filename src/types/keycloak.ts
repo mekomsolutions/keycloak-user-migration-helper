@@ -22,4 +22,4 @@ export interface KeycloakUser {
 
 export interface KeycloakImport {
   users: KeycloakUser[];
-} 
+}

@@ -1,8 +1,5 @@
 services:
   user-migration:
-    build:
-      context: .
-      dockerfile: Dockerfile
     container_name: keycloak-user-migration
     volumes:
       - ${HOST_LOGS_DIR:-./logs}:/app/logs
@@ -29,4 +26,5 @@ services:
       - OUTPUT_DIR=${OUTPUT_DIR}
       # Source system to migrate
       - SOURCE_SYSTEM=${SOURCE_SYSTEM}
+    image: mekomsolutions/keycloak-user-migration
     restart: "no"
