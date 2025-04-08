@@ -1,0 +1,12 @@
+# Node modules
+node_modules
+
+# Keycloak users
+keycloak-users.json
+
+# Logs
+*.log
+
+# Environment variables
+.env
+
