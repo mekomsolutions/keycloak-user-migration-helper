@@ -9,17 +9,24 @@ services:
       - ${HOST_OUTPUT_DIR:-./output}:/app/output
     environment:
       - NODE_ENV=production
-      # Database configuration
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
+      # OpenMRS database configuration
+      - OPENMRS_DB_HOST=${OPENMRS_DB_HOST}
+      - OPENMRS_DB_PORT=${OPENMRS_DB_PORT}
+      - OPENMRS_DB_USER=${OPENMRS_DB_USER}
+      - OPENMRS_DB_PASSWORD=${OPENMRS_DB_PASSWORD}
+      - OPENMRS_DB_NAME=${OPENMRS_DB_NAME}
+      # OpenMRS database configuration
+      - ODOO_DB_HOST=${ODOO_DB_HOST}
+      - ODOO_DB_PORT=${ODOO_DB_PORT}
+      - ODOO_DB_USER=${ODOO_DB_USER}
+      - ODOO_DB_PASSWORD=${ODOO_DB_PASSWORD}
+      - ODOO_DB_NAME=${ODOO_DB_NAME}
       # Keycloak configuration
       - KEYCLOAK_REALM_ROLES=${KEYCLOAK_REALM_ROLES}
       - KEYCLOAK_DEFAULT_PASSWORD=${KEYCLOAK_DEFAULT_PASSWORD}
-      # Output configuration
+      # Paths
+      - LOGS_DIR=${LOGS_DIR}
       - OUTPUT_DIR=${OUTPUT_DIR}
-      - OUTPUT_FILENAME=${OUTPUT_FILENAME}
+      # Source system to migrate
       - SOURCE_SYSTEM=${SOURCE_SYSTEM}
     restart: "no"

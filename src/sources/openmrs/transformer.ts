@@ -3,12 +3,12 @@ import { KeycloakUser } from '../../types/keycloak';
 
 export function transformToKeycloakUser(user: OpenMRSUser): KeycloakUser {
   return {
-    username: user.username,
+    username: user.username.toLowerCase().trim(),
+    email: user.email || '',
     firstName: user.given_name || '',
     lastName: user.family_name || '',
-    email: user.email || `${user.username}@example.com`,
     enabled: true,
-    emailVerified: false,
+    emailVerified: true,
     createdTimestamp: Date.now(),
     totp: false,
     credentials: [
@@ -18,16 +18,14 @@ export function transformToKeycloakUser(user: OpenMRSUser): KeycloakUser {
       }
     ],
     attributes: {
-      provider: 'true',
-      openmrs_uuid: user.uuid,
-      source_system: 'openmrs'
+      source_system: 'openmrs',
+      source_id: user.user_id.toString(),
+      uuid: user.uuid,
     },
     disableableCredentialTypes: [],
-    requiredActions: ['UPDATE_PASSWORD'],
-    realmRoles: process.env.KEYCLOAK_REALM_ROLES!.split(','),
-    clientRoles: {
-      [process.env.KEYCLOAK_CLIENT_ID!]: []
-    },
+    requiredActions: [],
+    realmRoles: JSON.parse(process.env.KEYCLOAK_REALM_ROLES!),
+    clientRoles: {},
     notBefore: 0,
     groups: []
   };

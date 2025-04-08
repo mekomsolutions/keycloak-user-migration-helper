@@ -6,11 +6,11 @@ dotenv.config();
 const isTestEnvironment = process.env.NODE_ENV === 'test';
 
 export const getDbConfig = (): PoolOptions => ({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: parseInt(process.env.DB_PORT || "3306"),
+  host: process.env.OPENMRS_DB_HOST,
+  user: process.env.OPENMRS_DB_USER,
+  password: process.env.OPENMRS_DB_PASSWORD,
+  database: process.env.OPENMRS_DB_NAME,
+  port: parseInt(process.env.OPENMRS_DB_PORT || "3306"),
   waitForConnections: true,
   connectionLimit: isTestEnvironment ? 1 : 10,
   queueLimit: 0,
@@ -18,7 +18,7 @@ export const getDbConfig = (): PoolOptions => ({
 });
 
 export const validateDbConfig = (): void => {
-  const requiredEnvVars = ["DB_HOST", "DB_USER", "DB_NAME"];
+  const requiredEnvVars = ["OPENMRS_DB_HOST", "OPENMRS_DB_USER", "OPENMRS_DB_NAME"];
   const missing = requiredEnvVars.filter((var_) => !process.env[var_]);
 
   if (missing.length) {
