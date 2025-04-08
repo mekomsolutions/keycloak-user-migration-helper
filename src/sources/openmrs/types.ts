@@ -6,4 +6,4 @@ export interface OpenMRSUser {
   middle_name: string | null;
   family_name: string | null;
   email: string | null;
-}
+} 

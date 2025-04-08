@@ -3,25 +3,12 @@ import mysql from "mysql2/promise";
 import fs from "fs/promises";
 import { dbConfig, validateDbConfig } from "./config/database";
 import logger from "./utils/logger";
-import { OpenMRSUser, KeycloakUser, KeycloakImport } from "./types/user";
+import { KeycloakImport } from "./types/keycloak";
+import { GET_USERS_QUERY } from "./sources/openmrs/queries";
+import { transformToKeycloakUser } from "./sources/openmrs/transformer";
+import { OpenMRSUser } from "./sources/openmrs/types";
 
 dotenv.config();
-
-const QUERY = `
-  SELECT 
-    u.uuid,
-    u.user_id,
-    u.username,
-    pn.given_name,
-    pn.middle_name,
-    pn.family_name,
-    u.email
-  FROM
-    users u
-    LEFT JOIN person_name pn ON (u.person_id = pn.person_id)
-  WHERE
-    u.retired = 0 AND pn.voided = 0 AND pn.preferred = 1;
-`;
 
 async function validateEnvironment(): Promise<void> {
   validateDbConfig();
@@ -31,6 +18,7 @@ async function validateEnvironment(): Promise<void> {
     "KEYCLOAK_DEFAULT_PASSWORD",
     "KEYCLOAK_CLIENT_ID",
     "OUTPUT_FILE",
+    "SOURCE_SYSTEM"
   ];
 
   const missing = requiredEnvVars.filter((var_) => !process.env[var_]);
@@ -41,53 +29,22 @@ async function validateEnvironment(): Promise<void> {
   }
 }
 
-function transformToKeycloakUser(user: OpenMRSUser): KeycloakUser {
-  return {
-    username: user.username,
-    firstName: user.given_name || "",
-    lastName: user.family_name || "",
-    email: user.email || `${user.username}@example.com`,
-    enabled: true,
-    emailVerified: false,
-    createdTimestamp: Date.now(),
-    totp: false,
-    credentials: [
-      {
-        type: "password",
-        value: process.env.KEYCLOAK_DEFAULT_PASSWORD!,
-      },
-    ],
-    attributes: {
-      provider: "true",
-      openmrs_uuid: user.uuid,
-    },
-    disableableCredentialTypes: [],
-    requiredActions: ["UPDATE_PASSWORD"],
-    realmRoles: process.env.KEYCLOAK_REALM_ROLES!.split(","),
-    clientRoles: {
-      [process.env.KEYCLOAK_CLIENT_ID!]: [],
-    },
-    notBefore: 0,
-    groups: [],
-  };
-}
-
 async function migrateUsers(): Promise<void> {
   let connection;
 
   try {
     await validateEnvironment();
-    logger.info("Starting user migration");
+    logger.info(`Starting user migration from ${process.env.SOURCE_SYSTEM}`);
 
     connection = await mysql.createPool(dbConfig);
     logger.info("Database connection established");
 
-    const [rows] = await connection.execute<mysql.RowDataPacket[]>(QUERY);
+    const [rows] = await connection.execute<mysql.RowDataPacket[]>(GET_USERS_QUERY);
     const users = rows as unknown as OpenMRSUser[];
-    logger.info(`Retrieved ${users.length} users from OpenMRS`);
+    logger.info(`Retrieved ${users.length} users from ${process.env.SOURCE_SYSTEM}`);
 
     const keycloakUsers: KeycloakImport = {
-      users: users.map(transformToKeycloakUser),
+      users: users.map(transformToKeycloakUser)
     };
 
     await fs.writeFile(
