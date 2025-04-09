@@ -15,7 +15,7 @@ import { OdooUser } from "./sources/odoo/types";
 
 dotenv.config();
 
-async function validateEnvironment(): Promise<void> {
+export async function validateEnvironment(): Promise<void> {
   validateDbConfig();
 
   const requiredEnvVars = [
@@ -109,7 +109,7 @@ async function migrateOdooUsers(): Promise<KeycloakUser[]> {
   }
 }
 
-async function migrateUsers(): Promise<void> {
+export async function migrateUsers(): Promise<void> {
   try {
     await validateEnvironment();
     const sourceSystem = process.env.SOURCE_SYSTEM?.toLowerCase();
@@ -147,10 +147,12 @@ async function migrateUsers(): Promise<void> {
   }
 }
 
-// Execute migration
-migrateUsers()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    logger.error("Migration failed:", error);
-    process.exit(1);
-  });
+// Only execute if this file is run directly
+if (require.main === module) {
+  migrateUsers()
+    .then(() => process.exit(0))
+    .catch((error) => {
+      logger.error("Migration failed:", error);
+      process.exit(1);
+    });
+}

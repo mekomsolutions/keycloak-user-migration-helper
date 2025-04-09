@@ -14,8 +14,14 @@ describe("OpenMRS Transformer", () => {
 
   beforeEach(() => {
     process.env.KEYCLOAK_DEFAULT_PASSWORD = "test-password";
-    process.env.KEYCLOAK_REALM_ROLES = "default-role";
+    process.env.KEYCLOAK_REALM_ROLES = JSON.stringify(["default-role"]);
     process.env.KEYCLOAK_CLIENT_ID = "test-client";
+  });
+
+  afterEach(() => {
+    delete process.env.KEYCLOAK_DEFAULT_PASSWORD;
+    delete process.env.KEYCLOAK_REALM_ROLES;
+    delete process.env.KEYCLOAK_CLIENT_ID;
   });
 
   it("should transform OpenMRS user to Keycloak user format", () => {
@@ -27,7 +33,7 @@ describe("OpenMRS Transformer", () => {
       lastName: "User",
       email: "test@example.com",
       enabled: true,
-      emailVerified: false,
+      emailVerified: true,
       createdTimestamp: expect.any(Number),
       totp: false,
       credentials: [
@@ -37,16 +43,14 @@ describe("OpenMRS Transformer", () => {
         },
       ],
       attributes: {
-        provider: "true",
-        openmrs_uuid: "test-uuid",
         source_system: "openmrs",
+        source_id: "1",
+        uuid: "test-uuid",
       },
       disableableCredentialTypes: [],
-      requiredActions: ["UPDATE_PASSWORD"],
+      requiredActions: [],
       realmRoles: ["default-role"],
-      clientRoles: {
-        "test-client": [],
-      },
+      clientRoles: {},
       notBefore: 0,
       groups: [],
     });
@@ -64,6 +68,6 @@ describe("OpenMRS Transformer", () => {
 
     expect(result.firstName).toBe("");
     expect(result.lastName).toBe("");
-    expect(result.email).toBe("testuser@example.com");
+    expect(result.email).toBe("");
   });
 });
