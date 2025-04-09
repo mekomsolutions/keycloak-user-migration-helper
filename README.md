@@ -27,6 +27,20 @@ cp .env.example .env
 npm start
 ```
 
+## Docker
+
+### Using the pre-built image
+
+```bash
+docker run -v $(pwd)/output:/app/output -v $(pwd)/logs:/app/logs --env-file .env ghcr.io/mekomsolutions/keycloak-user-migration-helper:latest
+```
+
+### Building locally
+
+```bash
+docker-compose up
+```
+
 ## Configuration
 
 Basic `.env` setup:
@@ -60,10 +74,6 @@ The tool creates:
 - Individual source files: `openmrs-users-YYYY-MM-DD.json`, `odoo-users-YYYY-MM-DD.json`
 - Combined file (when using `SOURCE_SYSTEM=all`): `keycloak-users-import.json`
 
-Import these files via Keycloak Admin UI: Users → Import → Upload JSON file.
+Import these files via Keycloak Admin UI: Realm Settings → Actions → Partial Import → Upload JSON file.
 
-## Docker Support
-
-```bash
-docker-compose up
-```
+> Detailed explaination of bulk users import here: https://docs.expertflow.com/cx/4.6/admin-guide-for-bulk-user-upload-to-keycloak

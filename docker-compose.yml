@@ -26,5 +26,5 @@ services:
       - OUTPUT_DIR=${OUTPUT_DIR}
       # Source system to migrate
       - SOURCE_SYSTEM=${SOURCE_SYSTEM}
-    image: mekomsolutions/keycloak-user-migration
+    image: ghcr.io/mekomsolutions/keycloak-user-migration-helper:latest
     restart: "no"
