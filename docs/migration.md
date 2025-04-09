@@ -20,7 +20,7 @@ User Import involves copying all users and their credentials directly into Keycl
 - Provides better performance as all data is local
 - Best for scenarios where the legacy system is being decommissioned
 
-## Using This Migration Tool
+## Using this migration tool
 
 This tool supports the User Import strategy, allowing you to:
 1. Extract users from OpenMRS and/or Odoo
@@ -76,7 +76,7 @@ docker run --rm \
 
 1. Build the Docker image:
 ```bash
-docker build -t keycloak-user-migration .
+docker build -t keycloak-user-migration-helper .
 ```
 
 2. Run the migration container:
@@ -84,7 +84,7 @@ docker build -t keycloak-user-migration .
 docker run --rm \
   --env-file .env \
   -v $(pwd)/output:/app/output \
-  keycloak-user-migration
+  keycloak-user-migration-helper
 ```
 
 The container will:
@@ -109,13 +109,6 @@ The tool generates the following files:
 4. Select the generated JSON file
 5. Click Import
 
-## Best Practices
-
-1. **Test First**: Always test the migration in a non-production environment first
-2. **Backup**: Take backups of both source systems and Keycloak before migration
-3. **Validate**: Verify the imported users and their attributes in Keycloak
-4. **Plan Rollback**: Have a rollback plan in case of issues
-5. **Monitor**: Monitor the system after migration for any authentication issues
 
 ## Troubleshooting
 
