@@ -4,6 +4,16 @@ A simple tool to extract users from OpenMRS and Odoo systems and generate JSON f
 
 > **Note**: This is a quick implementation for a specific use case. There might be better, more comprehensive tools available for user migration to Keycloak.
 
+## Migration Strategies
+
+Keycloak offers two main approaches for user migration:
+
+1. **User Federation**: Connects Keycloak to existing user stores (like LDAP or databases). Users remain in the original system while Keycloak handles authentication.
+
+2. **User Import**: Transfers all users and their credentials directly into Keycloak's database. This is ideal when retiring the legacy system.
+
+This tool implements the **User Import** strategy, providing a streamlined way to migrate users from OpenMRS and Odoo into Keycloak.
+
 ## What it does
 
 - Extracts users from OpenMRS (MySQL) and Odoo (PostgreSQL)
