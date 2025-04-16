@@ -19,8 +19,7 @@ export function transformToKeycloakUser(user: OpenMRSUser): KeycloakUser {
     ],
     attributes: {
       source_system: 'openmrs',
-      source_id: user.user_id.toString(),
-      uuid: user.uuid,
+      openmrs_user_uuid: user.uuid,
     },
     disableableCredentialTypes: [],
     requiredActions: [],

@@ -22,9 +22,8 @@ export function transformToKeycloakUser(user: OdooUser): KeycloakUser {
     ],
     attributes: {
       source_system: "odoo",
-      source_id: user.user_id.toString(),
-      partner_id: user.partner_id.toString(),
-      phone: user.phone_sanitized || user.phone || "",
+      odoo_partner_id: user.partner_id.toString(),
+      odoo_partner_phone_number: user.phone_sanitized || user.phone || "",
     },
     disableableCredentialTypes: [],
     requiredActions: [],

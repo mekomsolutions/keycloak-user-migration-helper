@@ -11,5 +11,5 @@ export const GET_USERS_QUERY = `
     users u
     LEFT JOIN person_name pn ON (u.person_id = pn.person_id)
   WHERE
-    u.retired = 0 AND pn.voided = 0 AND pn.preferred = 1;
-`; 
+    u.retired = 0 AND pn.voided = 0;
+`;
