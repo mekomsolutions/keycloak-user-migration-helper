@@ -44,15 +44,14 @@ describe("OpenMRS Transformer", () => {
       ],
       attributes: {
         source_system: "openmrs",
-        source_id: "1",
-        uuid: "test-uuid",
+        openmrs_user_uuid: "test-uuid",
       },
       disableableCredentialTypes: [],
       requiredActions: [],
       realmRoles: ["default-role"],
       clientRoles: {},
       notBefore: 0,
-      groups: [],
+      groups: []
     });
   });
 
