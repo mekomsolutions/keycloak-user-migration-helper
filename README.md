@@ -42,7 +42,19 @@ npm start
 ### Using the pre-built image
 
 ```bash
-docker run -v $(pwd)/output:/app/output -v $(pwd)/logs:/app/logs --env-file .env ghcr.io/mekomsolutions/keycloak-user-migration-helper:latest
+# If your databases are on the host machine
+docker run --network host \
+  -v $(pwd)/output:/app/output \
+  -v $(pwd)/logs:/app/logs \
+  --env-file .env \
+  ghcr.io/mekomsolutions/keycloak-user-migration-helper:latest
+
+# If your databases are in Docker containers
+docker run --network your_database_network \
+  -v $(pwd)/output:/app/output \
+  -v $(pwd)/logs:/app/logs \
+  --env-file .env \
+  ghcr.io/mekomsolutions/keycloak-user-migration-helper:latest
 ```
 
 ### Building locally
