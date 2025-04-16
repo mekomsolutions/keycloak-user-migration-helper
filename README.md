@@ -22,24 +22,13 @@ This tool implements the **User Import** strategy, providing a streamlined way t
 
 ## Quick Start
 
-1. Install dependencies:
-```bash
-npm install
-```
+1. Copy and edit the environment file:
 
-2. Copy and edit the environment file:
 ```bash
 cp .env.example .env
 ```
 
-3. Run the migration:
-```bash
-npm start
-```
-
-## Docker
-
-### Using the pre-built image
+2. Run the migration using the pre-built image:
 
 ```bash
 # If your databases are on the host machine
@@ -47,17 +36,44 @@ docker run --network host \
   -v $(pwd)/output:/app/output \
   -v $(pwd)/logs:/app/logs \
   --env-file .env \
-  ghcr.io/mekomsolutions/keycloak-user-migration-helper:latest
+  mekomsolutions/keycloak-user-migration-helper:latest
 
 # If your databases are in Docker containers
 docker run --network your_database_network \
   -v $(pwd)/output:/app/output \
   -v $(pwd)/logs:/app/logs \
   --env-file .env \
-  ghcr.io/mekomsolutions/keycloak-user-migration-helper:latest
+  mekomsolutions/keycloak-user-migration-helper:latest
 ```
 
-### Building locally
+## Building Locally
+
+For development or custom builds:
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/mekomsolutions/keycloak-user-migration-helper.git
+cd keycloak-user-migration-helper
+```
+
+2. Build the Docker image:
+
+```bash
+docker build -t keycloak-user-migration-helper .
+```
+
+3. Run using the locally built image:
+
+```bash
+docker run --network host \
+  -v $(pwd)/output:/app/output \
+  -v $(pwd)/logs:/app/logs \
+  --env-file .env \
+  keycloak-user-migration-helper
+```
+
+Or use docker-compose:
 
 ```bash
 docker-compose up
@@ -66,6 +82,7 @@ docker-compose up
 ## Configuration
 
 Basic `.env` setup:
+
 ```env
 # OpenMRS database configuration
 OPENMRS_DB_HOST=localhost
@@ -93,6 +110,7 @@ SOURCE_SYSTEM=all # openmrs, odoo, or all
 ## Output Files
 
 The tool creates:
+
 - Individual source files: `openmrs-users-YYYY-MM-DD.json`, `odoo-users-YYYY-MM-DD.json`
 - Combined file (when using `SOURCE_SYSTEM=all`): `keycloak-users-import.json`
 
