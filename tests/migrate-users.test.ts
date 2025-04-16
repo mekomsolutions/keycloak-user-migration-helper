@@ -15,6 +15,60 @@ jest.mock("../src/sources/odoo/transformer");
 jest.mock("../src/utils/logger");
 
 describe("Migration Utilities", () => {
+  const mockTransformedOpenMRSUser: KeycloakUser = {
+    username: "testuser",
+    firstName: "Test",
+    lastName: "User",
+    email: "test@example.com",
+    enabled: true,
+    emailVerified: true,
+    createdTimestamp: Date.now(),
+    totp: false,
+    credentials: [
+      {
+        type: "password",
+        value: "test-password",
+      },
+    ],
+    attributes: {
+      source_system: "openmrs",
+      openmrs_user_uuid: "test-uuid",
+    },
+    disableableCredentialTypes: [],
+    requiredActions: [],
+    realmRoles: ["role1", "role2"],
+    clientRoles: {},
+    notBefore: 0,
+    groups: [],
+  };
+
+  const mockTransformedOdooUser: KeycloakUser = {
+    username: "testuser",
+    firstName: "Test",
+    lastName: "User",
+    email: "test@example.com",
+    enabled: true,
+    emailVerified: true,
+    createdTimestamp: Date.now(),
+    totp: false,
+    credentials: [
+      {
+        type: "password",
+        value: "test-password",
+      },
+    ],
+    attributes: {
+      source_system: "odoo",
+      odoo_partner_id: "1",
+    },
+    disableableCredentialTypes: [],
+    requiredActions: [],
+    realmRoles: ["role1", "role2"],
+    clientRoles: {},
+    notBefore: 0,
+    groups: [],
+  };
+
   const mockOpenMRSUser = {
     uuid: "test-uuid",
     user_id: 1,
@@ -46,6 +100,13 @@ describe("Migration Utilities", () => {
     process.env.ODOO_DB_PASSWORD = "testpass";
     process.env.ODOO_DB_NAME = "testdb";
     process.env.ODOO_DB_PORT = "5432";
+
+    // Mock transformer functions
+    const { transformToKeycloakUser: transformOpenMRSUser } = require("../src/sources/openmrs/transformer");
+    const { transformToKeycloakUser: transformOdooUser } = require("../src/sources/odoo/transformer");
+    
+    transformOpenMRSUser.mockReturnValue(mockTransformedOpenMRSUser);
+    transformOdooUser.mockReturnValue(mockTransformedOdooUser);
 
     // Reset all mocks
     jest.clearAllMocks();
@@ -163,7 +224,7 @@ describe("Migration Utilities", () => {
       await migrateUsers();
       expect(mysql.createPool).toHaveBeenCalled();
       expect(Pool).toHaveBeenCalled();
-      expect(fs.writeFile).toHaveBeenCalledTimes(3); // Once for each source and once for merged
+      expect(fs.writeFile).toHaveBeenCalledTimes(4); // Once for each source, once for merged, and once for duplicates
     });
 
     it("should throw error for unsupported source system", async () => {

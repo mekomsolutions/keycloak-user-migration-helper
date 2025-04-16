@@ -109,6 +109,44 @@ async function migrateOdooUsers(): Promise<KeycloakUser[]> {
   }
 }
 
+function handleDuplicateUsernames(users: KeycloakUser[]): { uniqueUsers: KeycloakUser[], duplicateUsers: KeycloakUser[] } {
+  const usernameMap = new Map<string, KeycloakUser[]>();
+  
+  // Group users by username
+  users.forEach(user => {
+    const existing = usernameMap.get(user.username) || [];
+    usernameMap.set(user.username, [...existing, user]);
+  });
+
+  // Separate unique and duplicate users
+  const uniqueUsers: KeycloakUser[] = [];
+  const duplicateUsers: KeycloakUser[] = [];
+  
+  usernameMap.forEach((usersWithSameUsername, username) => {
+    if (usersWithSameUsername.length === 1) {
+      uniqueUsers.push(usersWithSameUsername[0]);
+    } else {
+      // Find OpenMRS user if exists
+      const openmrsUser = usersWithSameUsername.find(user => user.attributes.source_system === 'openmrs');
+      const selectedUser = openmrsUser || usersWithSameUsername[0];
+      
+      // Add selected user to unique list
+      uniqueUsers.push(selectedUser);
+      
+      // Add all other users to duplicates
+      const otherUsers = usersWithSameUsername.filter(user => user !== selectedUser);
+      duplicateUsers.push(...otherUsers);
+
+      // Log detailed information about duplicates
+      logger.info(`Found duplicate username: ${username}`);
+      logger.info(`Selected user from ${selectedUser.attributes.source_system} system`);
+      logger.info(`Duplicate users from: ${otherUsers.map(u => u.attributes.source_system).join(', ')}`);
+    }
+  });
+
+  return { uniqueUsers, duplicateUsers };
+}
+
 export async function migrateUsers(): Promise<void> {
   try {
     await validateEnvironment();
@@ -131,15 +169,29 @@ export async function migrateUsers(): Promise<void> {
         throw new Error(`Unsupported source system: ${sourceSystem}`);
     }
 
+    // Handle duplicate usernames
+    const { uniqueUsers, duplicateUsers } = handleDuplicateUsernames(allUsers);
+
     // Write merged file only if we have users from multiple sources
     if (sourceSystem === 'all') {
       const mergedOutput: KeycloakImport = {
-        users: allUsers,
+        users: uniqueUsers,
       };
       const outputPath = getOutputPath();
       await ensureDirectoryExists(outputPath);
       await fs.writeFile(outputPath, JSON.stringify(mergedOutput, null, 2), "utf8");
-      logger.info(`Successfully merged ${allUsers.length} users to ${outputPath}`);
+      logger.info(`Successfully wrote ${uniqueUsers.length} unique users to ${outputPath}`);
+
+      // Write duplicates to a separate file if any exist
+      if (duplicateUsers.length > 0) {
+        const duplicatesOutput: KeycloakImport = {
+          users: duplicateUsers,
+        };
+        const duplicatesPath = path.join(process.env.OUTPUT_DIR!, `duplicate-users-${new Date().toISOString().split('T')[0]}.json`);
+        await fs.writeFile(duplicatesPath, JSON.stringify(duplicatesOutput, null, 2), "utf8");
+        logger.info(`Found ${duplicateUsers.length} duplicate usernames. Wrote them to ${duplicatesPath}`);
+        logger.info(`Summary: ${duplicateUsers.length} users were skipped due to duplicate usernames. OpenMRS users were preferred when available.`);
+      }
     }
   } catch (error) {
     logger.error("Error during migration:", error);
